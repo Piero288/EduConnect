@@ -9,7 +9,7 @@ app = Flask(__name__)
 @app.route('/api/<string:service>/<path:subpath>', methods=["GET", "POST", "PUT", "DELETE"])
 def proxy(service, subpath):
     if service not in SERVICE_MAP or not SERVICE_MAP[service]:
-        return jsonify({"error": f"Servizio '{service}' non supportato o non configurato."}), 404
+        return jsonify({"error": f"Service '{service}' not supported or not configured."}), 404
 
     target_url = f"{SERVICE_MAP[service]}/{subpath}"
     try:
@@ -22,7 +22,7 @@ def proxy(service, subpath):
         )
         return (resp.content, resp.status_code, resp.headers.items())
     except requests.exceptions.ConnectionError:
-        return jsonify({"error": f"Impossibile contattare il servizio '{service}'"}), 503
+        return jsonify({"error": f"Unable to contact service: '{service}'"}), 503
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)))
