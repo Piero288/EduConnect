@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    ports:
+      - "9050:9050"
+    env_file:
+      - ./auth-service/.env
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./api-gateway/.env
+    depends_on:
+      - auth-service
+    environment:
+      AUTH_URL: http://auth-service:5002
