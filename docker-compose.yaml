@@ -29,12 +29,46 @@ services:
       - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_DATABASE: ${MYSQL_USERSERVICE_DB}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql_user_data:/var/lib/mysql
       - ./user-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  course-service:
+    build: ./course-service
+    container_name: course-service
+    ports:
+      - "9052:9052"
+    env_file:
+      - ./course-service/.env
+    depends_on:
+      mysql-coursedb:
+        condition: service_healthy
+    volumes:
+      - ./course-service/logs:/courseservice/logs
+    restart: always
+
+  mysql-coursedb:
+    image: mysql:8.0
+    container_name: mysql-coursedb
+    restart: always
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_COURSESERVICE_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_course_data:/var/lib/mysql
+      - ./course-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
@@ -55,3 +89,4 @@ services:
 
 volumes:
   mysql_user_data:
+  mysql_course_data:
