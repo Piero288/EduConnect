@@ -4,15 +4,7 @@ import logging
 from dotenv import load_dotenv
 
 load_dotenv()
-'''
-MYSQL_CONFIG = {
-    'host': os.getenv('MYSQL_HOST'),
-    'port': int(os.getenv('MYSQL_PORT')),
-    'database': os.getenv('MYSQL_DB'),
-    'user': os.getenv('MYSQL_USER'),
-    'password': os.getenv('MYSQL_PASSWORD')
-}
-'''
+
 # DB connection
 def get_db_connection():
     return mysql.connector.connect(
