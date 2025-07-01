@@ -1,44 +1,59 @@
 from flask import Blueprint, request, jsonify
+from configuration.config import logger
 import service.course_service as course_service
 
 course_bp = Blueprint('course_bp', __name__)
 
 @course_bp.route('/getAll', methods=['GET'])
 def get_all_courses():
+    logger.info("A new request has arrived to recover all courses")
     courses = course_service.list_courses()
     return jsonify(courses), 200
 
 @course_bp.route('/getById/<int:course_id>', methods=['GET'])
 def get_course(course_id):
+    logger.info(f"A new request has arrived to retrieve the course with id {course_id}")
     course = course_service.get_course(course_id)
     if course:
+        logger.info(f"Course with id {course_id}  found.")
         return jsonify(course), 200
-    return jsonify({"error": "Course not found"}), 404
+    else:
+        logger.error(f"Course with id {course_id} not found.")
+        return jsonify({"error": "Course not found"}), 404
 
 @course_bp.route('/new', methods=['POST'])
 def create_course():
+    logger.info("A new request has arrived to create a new course.")
     data = request.get_json()
     required_fields = ("title", "description", "duration")
     if not all(k in data for k in required_fields):
         return jsonify({"error": "Missing fields"}), 400
     course_service.add_course(data)
+    logger.info("Course created successfully")
     return jsonify({"message": "Course created successfully"}), 201
 
-@course_bp.route('/enroll', methods=['POST'])
+@course_bp.route('/new_enroll', methods=['POST'])
 def enroll():
     data = request.get_json()
+    logger.info(f"A new request has arrived to create a new enrollment for user: {data.get('user_email', 'UNKNOWN')}.")
     if 'course_id' not in data or 'user_email' not in data:
+        logger.error("User email and courseId are required")
         return jsonify({"error": "Missing course_id or user_email"}), 400
     success = course_service.enroll_user_in_course(data['course_id'], data['user_email'])
     if success:
+        logger.info("Enrollment successful")
         return jsonify({"message": "Enrollment successful"}), 200
     else:
+        logger.info("User already enrolled")
         return jsonify({"message": "User already enrolled"}), 409
 
-@course_bp.route('/enrollments', methods=['GET'])
-def get_enrollments():
+@course_bp.route('/user_enrollments', methods=['GET'])
+def get_user_enrollments():
+    logger.info(f"A new request has arrived to retrieve enrollment for user")
     user_email = request.args.get('user_email')
     if not user_email:
+        logger.error("Missing user_email")
         return jsonify({"error": "Missing user_email"}), 400
     enrollments = course_service.get_user_enrollments(user_email)
+    logger.info(f"All enrollments for user: {user_email} are: {enrollments}")
     return jsonify(enrollments), 200
