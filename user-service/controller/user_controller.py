@@ -29,6 +29,7 @@ def get_user_by_id(user_id):
     logger.info(f"A new request has arrived to retrieve the user with id {user_id}")
     user = user_service.get_user(user_id)
     if user:
+        logger.info(f"User with id {user_id} found.")
         return jsonify(user), 200
     else:
         logger.error(f"User with id {user_id} not found.")
@@ -45,6 +46,7 @@ def get_user_by_email():
     logger.info(f"A new request has arrived to retrieve the user with email {email}")
     user = user_service.get_user_by_email(email)
     if user:
+        logger.info(f"User with email {email} found.")
         return jsonify(user), 200
     else:
         logger.error(f"User with email {email} not found.")
