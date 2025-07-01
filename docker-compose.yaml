@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   auth-service:
     build: ./auth-service
@@ -8,6 +6,40 @@ services:
       - "9050:9050"
     env_file:
       - ./auth-service/.env
+  
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    ports:
+      - "9051:9051"
+    env_file:
+      - ./user-service/.env
+    depends_on:
+      mysql-userdb:
+        condition: service_healthy
+    volumes:
+      - ./user-service/logs:/userservice/logs
+    restart: always
+
+  mysql-userdb:
+    image: mysql:8.0
+    container_name: mysql-userdb
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_user_data:/var/lib/mysql
+      - ./user-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   api-gateway:
     build: ./api-gateway
@@ -19,4 +51,7 @@ services:
     depends_on:
       - auth-service
     environment:
-      AUTH_URL: http://auth-service:5002
+      AUTH_URL: http://auth-service:9050
+
+volumes:
+  mysql_user_data:
