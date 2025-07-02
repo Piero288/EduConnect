@@ -2,14 +2,19 @@ import repository.user_repository as repo
 import bcrypt, os, requests
 from configuration.config import logger
 from model.user import User
+from dotenv import load_dotenv
 from flask import jsonify
+
+load_dotenv()
 
 def authenticate_user(email, password):
     user = repo.get_user_by_email(email, False)
     if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
         auth_service_url = os.getenv('AUTH_SERVICE_URL', 'http://auth-service:9050/auth')
         auth_api_url = f"{auth_service_url}/authenticate"
-        payload = {'user_id': user.user_id}
+        payload = {'user_id': user.user_id,
+                   'user_email': user.email
+                   }
         try:
             response = requests.post(auth_api_url, json=payload)
             if response.status_code == 200:
