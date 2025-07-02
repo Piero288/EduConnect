@@ -1,4 +1,15 @@
 services:
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./api-gateway/.env
+    depends_on:
+      - auth-service
+    environment:
+      AUTH_URL: http://auth-service:9050
   auth-service:
     build: ./auth-service
     container_name: auth-service
@@ -75,17 +86,58 @@ services:
       timeout: 5s
       retries: 5
 
-  api-gateway:
-    build: ./api-gateway
-    container_name: api-gateway
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
     ports:
-      - "5000:5000"
-    env_file:
-      - ./api-gateway/.env
-    depends_on:
-      - auth-service
+      - "2181:2181"
     environment:
-      AUTH_URL: http://auth-service:9050
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka0:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka0
+    hostname: kafka0
+    depends_on:
+      - zookeeper
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      #KAFKA_PROCESS_ROLES: broker
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_INTERNAL://kafka0:9092,LISTENER_EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_INTERNAL:PLAINTEXT,LISTENER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_INTERNAL
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_CREATE_TOPICS: >
+        course-lingua_inglese:1:1,
+        course-lingua_francese:1:1,
+        course-machine_learning:1:1,
+        course-data_science:1:1,
+        course-python_base:1:1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - default
+  publisher-service:
+    build: ./publisher-service
+    container_name: publisher-service
+    ports:
+      - "5004:5004"
+    depends_on:
+      kafka0:
+        condition: service_healthy
+    env_file:
+      - ./publisher-service/.env
+    volumes:
+      - ./publisher-service/logs:/publisherservice/logs
+    restart: always
 
 volumes:
   mysql_user_data:
