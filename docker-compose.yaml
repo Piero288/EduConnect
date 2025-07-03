@@ -8,8 +8,8 @@ services:
       - ./api-gateway/.env
     depends_on:
       - auth-service
-    environment:
-      AUTH_URL: http://auth-service:9050
+      - user-service
+      - course-service
   auth-service:
     build: ./auth-service
     container_name: auth-service
@@ -17,6 +17,9 @@ services:
       - "9050:9050"
     env_file:
       - ./auth-service/.env
+    volumes:
+      - ./auth-service/logs:/authservice/logs
+    restart: always
   
   user-service:
     build: ./user-service
@@ -105,18 +108,11 @@ services:
       - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
-      #KAFKA_PROCESS_ROLES: broker
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: LISTENER_INTERNAL://kafka0:9092,LISTENER_EXTERNAL://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_INTERNAL:PLAINTEXT,LISTENER_EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_INTERNAL
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
-      KAFKA_CREATE_TOPICS: >
-        course-lingua_inglese:1:1,
-        course-lingua_francese:1:1,
-        course-machine_learning:1:1,
-        course-data_science:1:1,
-        course-python_base:1:1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     healthcheck:
       test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
@@ -138,6 +134,19 @@ services:
     volumes:
       - ./publisher-service/logs:/publisherservice/logs
     restart: always
+  
+  subscriber-service:
+    build: ./subscriber-service
+    container_name: subscriber-service
+    depends_on:
+      kafka0:
+        condition: service_healthy
+    env_file:
+      - ./subscriber-service/.env
+    volumes:
+      - ./subscriber-service/logs:/subscriberservice/logs
+    restart: always
+
 
 volumes:
   mysql_user_data:
