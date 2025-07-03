@@ -76,3 +76,17 @@ def get_user_enrollments():
     logger.info(f"All enrollments for user: {user_email} are: {enrollments}")
     
     return jsonify(enrollments), 200
+
+@course_bp.route('/enrollments/emails', methods=['GET'])
+def get_enrolled_emails():
+    course_title = request.args.get('course_title')
+    if not course_title:
+        logger.error("Missing course title")
+        return jsonify({"error": "Missing course_title"}), 400
+
+    course_title = course_title.replace("_", " ") if "_" in course_title else course_title
+
+    logger.info(f"Fetching enrolled emails for course: {course_title}")
+    emails = course_service.get_enrolled_emails_by_title(course_title)
+    logger.info(f"Found {len(emails)} emails")
+    return jsonify({"emails": emails}), 200

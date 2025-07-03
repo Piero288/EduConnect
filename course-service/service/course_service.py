@@ -1,12 +1,8 @@
 import repository.course_repository as course_repo
 import repository.enrollment_repository as enroll_repo
-from configuration.config import logger
-import requests
-import os
-from dotenv import load_dotenv
+from configuration.config import logger, AUTH_SERVICE_URL
 from model.course import Course
-
-load_dotenv()
+import requests
 
 def list_courses():
     return course_repo.get_all_courses()
@@ -18,11 +14,10 @@ def add_course(data):
     course = Course(None, data['title'], data['description'], data['duration'])
     course_repo.create_course(course)
 
-
 def enroll_user_in_course(course_id, token):
     try:
-        auth_service_url = os.getenv('AUTH_SERVICE_URL', 'http://auth-service:9050/auth')
-        auth_api_url = f"{auth_service_url}/verify_token"
+        
+        auth_api_url = f"{AUTH_SERVICE_URL}/verify_token"
         response = requests.post(
             auth_api_url,
             json={"token": token}
@@ -51,3 +46,6 @@ def enroll_user_in_course(course_id, token):
 
 def get_user_enrollments(user_email):
     return enroll_repo.get_enrollments_by_user(user_email)
+
+def get_enrolled_emails_by_title(course_title):
+    return enroll_repo.get_emails_by_course_title(course_title)

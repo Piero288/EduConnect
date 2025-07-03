@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+AUTH_SERVICE_URL = os.getenv('AUTH_SERVICE_URL', 'http://auth-service:9050/auth')
+
 # DB connection
 def get_db_connection():
     return mysql.connector.connect(
@@ -30,3 +32,11 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger("course_service")
+
+#kafka
+ENVIRONMENT = os.getenv("ENVIRONMENT", "local")
+
+if ENVIRONMENT == "k8s":
+    KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS_K8S", "kafka0:29092")
+else:
+    KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS_LOCAL", "kafka0:9092")

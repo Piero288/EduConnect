@@ -33,3 +33,18 @@ def get_enrollments_by_user(user_email):
     cursor.close()
     conn.close()
     return [Enrollment(*row).to_dict() for row in rows]
+
+def get_emails_by_course_title(course_title):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    query = """
+        SELECT e.user_email
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.course_id
+        WHERE c.title = %s
+    """
+    cursor.execute(query, (course_title,))
+    emails = [row[0] for row in cursor.fetchall()]
+    cursor.close()
+    conn.close()
+    return emails
