@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import requests
 import os
 from dotenv import load_dotenv
+from prometheus_flask_exporter import PrometheusMetrics
 
 load_dotenv()
 
@@ -9,9 +10,11 @@ SERVICE_MAP = {
     "auth": os.getenv("AUTH_SERVICE_URL"),
     "users": os.getenv("USER_SERVICE_URL"),
     "courses": os.getenv("COURSE_SERVICE_URL"),
+    "publisher": os.getenv("PUBLISHER_SERVICE_URL"),
 }
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
 
 #routing dinamico
 @app.route('/api/<string:service>/', defaults={'subpath': ''}, methods=["GET", "POST", "PUT", "DELETE"])
