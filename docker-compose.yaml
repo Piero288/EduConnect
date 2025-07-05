@@ -167,6 +167,14 @@ services:
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+  predictor-service:
+    build: ./predictor-service
+    container_name: predictor-service
+    ports:
+      - "9055:9055"
+    env_file:
+      - ./predictor-service/.env
+    restart: always
 
 volumes:
   mysql_user_data:
