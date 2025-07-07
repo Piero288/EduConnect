@@ -1,6 +1,5 @@
 Flask
 requests
-pandas
-scikit-learn
+statsmodels
 python-dotenv
 prometheus_client

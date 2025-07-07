@@ -4,7 +4,9 @@ from service.predictor_service import (get_average_response_time,
                                        get_total_http_requests,
                                        get_container_memory_usage, 
                                        get_container_start_time, 
-                                       get_network_transmit_errors)
+                                       get_network_transmit_errors,
+                                       get_response_time_series, 
+                                       predict_response_time_with_arima)
 
 predictor_bp = Blueprint('predictor', __name__)
 
@@ -58,3 +60,22 @@ def get_network_errors():
     logger.info(f"A new request has arrived to retrieve the total network errors from the '{container_name}' container.")
     result = get_network_transmit_errors(container_name)
     return jsonify(result)
+
+#predittore con ARIMA su tempo medio di risposta
+@predictor_bp.route('/predict_response_time', methods=['GET'])
+def predict_response_time():
+    logger.info(f"A new request has arrived to predict the response time for requests.")
+    try:
+        steps = int(request.args.get('steps', 5))  # default: 5 minuti
+        minutes = int(request.args.get('minutes', 6))
+        series = get_response_time_series(minutes)
+        if not series:
+            logger.error("No data retrieved.")
+            return jsonify({"error": "No data retrieved"}), 404
+
+        result = predict_response_time_with_arima(series, steps=steps)
+        logger.info(f"Pedict: {result}")
+        return jsonify(result), 200
+    except Exception as e:
+        logger.error(f"Prediction error: {e}")
+        return jsonify({"error": "Internal server error"}), 500

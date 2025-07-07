@@ -1,6 +1,8 @@
 from utils.prometheus_utils import query_prometheus
 from configuration.config import logger
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from utils.prometheus_utils import query_prometheus_range
+from statsmodels.tsa.arima.model import ARIMA
 
 def get_average_response_time(minutes):
     
@@ -82,3 +84,41 @@ def get_network_transmit_errors(container_name):
     except:
         logger.error("Error parsing result")
         return {"message": "Error parsing result", "value": None}
+
+def get_response_time_series(minutes):
+    query = (
+        f"rate(flask_http_request_duration_seconds_sum[1m]) / "
+        f"rate(flask_http_request_duration_seconds_count[1m])"
+    )
+    end = int(datetime.now(timezone.utc).timestamp())
+    start = int((datetime.now(timezone.utc) - timedelta(minutes=minutes)).timestamp())
+    step = 30  
+
+    result = query_prometheus_range(query, start, end, step)
+    if not result:
+        logger.info("No data retrieved from prometheus.")
+        return []
+
+    try:
+        values = result[0]['values']
+        numeric_values = [float(v[1]) for v in values if v[1] != 'NaN']
+        logger.info(f"Data retrieved from prometheus: {[round(val, 2) for val in numeric_values]}")
+        return numeric_values
+    except (IndexError, KeyError, ValueError):
+        return []
+
+def predict_response_time_with_arima(series, steps=10):
+    if len(series) < 3:
+        logger.info("Not enough data for prediction with ARIMA")
+        return {"message": "Not enough data for prediction", "predictions": []}
+    
+    model = ARIMA(series, order=(2, 1, 2))  # Parametri ARIMA base
+    model_fit = model.fit()
+    forecast = model_fit.forecast(steps=steps)
+    forecast_list = forecast.tolist()
+    rounded_forecast = [round(val, 2) for val in forecast_list]
+    logger.info(f"Forecast for next {steps} minutes: {rounded_forecast}")
+    return {
+        "message": f"Forecast for next {steps} minutes",
+        "predictions": rounded_forecast
+    }
