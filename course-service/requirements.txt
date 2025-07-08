@@ -4,3 +4,4 @@ python-dotenv
 mysql-connector-python
 bcrypt
 confluent_kafka
+prometheus-flask-exporter

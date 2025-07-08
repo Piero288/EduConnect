@@ -1,3 +1,4 @@
 flask
 pyjwt
 python-dotenv
+prometheus-flask-exporter
