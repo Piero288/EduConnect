@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import requests
 import os
+import logging
 from dotenv import load_dotenv
 from prometheus_flask_exporter import PrometheusMetrics
 
@@ -15,6 +16,17 @@ SERVICE_MAP = {
 
 app = Flask(__name__)
 metrics = PrometheusMetrics(app)
+
+werkzeug_logger = logging.getLogger('werkzeug')
+
+@app.before_request
+def mute_werkzeug_on_health_and_metrics():
+    if request.path in ["/health", "/metrics"]:
+        if werkzeug_logger.level != logging.ERROR:
+            werkzeug_logger.setLevel(logging.ERROR)
+    else:
+        if werkzeug_logger.level != logging.INFO:
+            werkzeug_logger.setLevel(logging.INFO)
 
 @app.route("/health", methods=["GET"])
 def health_check():
