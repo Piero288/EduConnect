@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: publisher-config
+data:
+  KAFKA_BOOTSTRAP_SERVERS_K8S: "kafka0:29092"
+  KAFKA_BOOTSTRAP_SERVERS_LOCAL: "kafka0:9092"
+  ENVIRONMENT: "local"

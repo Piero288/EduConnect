@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: course-deployment
+  labels:
+    app: course-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: course-service
+  template:
+    metadata:
+      labels:
+        app: course-service
+    spec:
+      containers:
+        - name: course-service
+          image: educonnect-course-service:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9052
+          envFrom:
+            - configMapRef:
+                name: course-config
+            - secretRef:
+                name: course-secret
+          volumeMounts:
+            - name: course-logs
+              mountPath: /courseservice/logs
+          livenessProbe:
+            httpGet:
+              path: /courses/health
+              port: 9052
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /courses/health
+              port: 9052
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: course-logs
+          emptyDir: {}

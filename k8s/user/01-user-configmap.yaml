@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-config
+data:
+  MYSQL_HOST: "mysql-userdb"
+  MYSQL_PORT: "3306"
+  MYSQL_DB: "userdb"
+  MYSQL_USER: "user"
+  AUTH_SERVICE_URL: "http://auth-service:9050/auth"

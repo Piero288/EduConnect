@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-deployment
+  labels:
+    app: user-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: educonnect-user-service:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9051
+          envFrom:
+            - configMapRef:
+                name: user-config
+            - secretRef:
+                name: user-secret
+          volumeMounts:
+            - name: user-logs
+              mountPath: /userservice/logs
+          livenessProbe:
+            httpGet:
+              path: /users/health
+              port: 9051
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /users/health
+              port: 9051
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: user-logs
+          emptyDir: {}

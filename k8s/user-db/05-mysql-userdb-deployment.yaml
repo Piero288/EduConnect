@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-userdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-userdb
+  template:
+    metadata:
+      labels:
+        app: mysql-userdb
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          envFrom:
+            - configMapRef:
+                name: mysql-userdb-config
+            - secretRef:
+                name: mysql-userdb-secret
+          volumeMounts:
+            - name: mysql-userdb-storage
+              mountPath: /var/lib/mysql
+            - name: mysql-init-volume
+              mountPath: /docker-entrypoint-initdb.d/init.sql  # Montiamo solo il file init.sql
+              subPath: init.sql  # Usa solo la parte "init.sql" del ConfigMap
+      volumes:
+        - name: mysql-userdb-storage
+          persistentVolumeClaim:
+            claimName: mysql-userdb-pvc 
+        - name: mysql-init-volume
+          configMap:
+            name: mysql-userdb-config

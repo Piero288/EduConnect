@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subscriber-deployment
+  labels:
+    app: subscriber-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: subscriber-service
+  template:
+    metadata:
+      labels:
+        app: subscriber-service
+    spec:
+      containers:
+        - name: subscriber-service
+          image: educonnect-subscriber-service:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5005
+          envFrom:
+            - configMapRef:
+                name: subscriber-config
+          volumeMounts:
+            - name: subscriber-logs
+              mountPath: /subscriberservice/logs
+          livenessProbe:
+            httpGet:
+              path: /subscriber/health
+              port: 5005
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /subscriber/health
+              port: 5005
+            initialDelaySeconds: 5
+      volumes:
+        - name: subscriber-logs
+          emptyDir: {}
