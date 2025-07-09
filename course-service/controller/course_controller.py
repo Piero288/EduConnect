@@ -4,6 +4,10 @@ import service.course_service as course_service
 
 course_bp = Blueprint('course_bp', __name__)
 
+@course_bp.route("/health", methods=["GET"])
+def health_check():
+    return "OK", 200
+
 @course_bp.route('/getAll', methods=['GET'])
 def get_all_courses():
     logger.info("A new request has arrived to recover all courses")

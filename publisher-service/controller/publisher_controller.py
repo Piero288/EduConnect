@@ -4,6 +4,10 @@ from configuration.config import logger
 
 publisher_bp = Blueprint('publisher', __name__)
 
+@publisher_bp.route("/health", methods=["GET"])
+def health_check():
+    return "OK", 200
+
 @publisher_bp.route('/publish_notice', methods=['POST'])
 def publish_notice():
     logger.info("A new request to publish notice has arrived.")

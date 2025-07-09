@@ -4,6 +4,10 @@ from configuration.config import logger
 
 auth_blueprint = Blueprint('auth', __name__)
 
+@auth_blueprint.route("/health", methods=["GET"])
+def health_check():
+    return "OK", 200
+
 @auth_blueprint.route('/authenticate', methods=['POST'])
 def authenticate():
     logger.info(f"A new authenticate request has arrived.")

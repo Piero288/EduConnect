@@ -1,9 +1,8 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint
 from configuration.config import logger
 
 subscriber_bp = Blueprint('subscriber', __name__)
 
-@subscriber_bp.route('/')
-def home():
-    logger.info("Subscriber service is running")
-    return jsonify({"message": "Subscriber service is running"}), 200
+@subscriber_bp.route("/health", methods=["GET"])
+def health_check():
+    return "OK", 200

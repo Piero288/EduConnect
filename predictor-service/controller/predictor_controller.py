@@ -10,6 +10,10 @@ from service.predictor_service import (get_average_response_time,
 
 predictor_bp = Blueprint('predictor', __name__)
 
+@predictor_bp.route("/health", methods=["GET"])
+def health_check():
+    return "OK", 200
+
 #white-box -> tempo medio di risposta
 @predictor_bp.route('/avg_response_time', methods=['GET'])
 def get_average_response_time_prediction():

@@ -4,6 +4,10 @@ import service.user_service as user_service
 
 user_bp = Blueprint('user_bp', __name__)
 
+@user_bp.route("/health", methods=["GET"])
+def health_check():
+    return "OK", 200
+
 # POST /auth -> autenticazione utenter
 @user_bp.route('/auth', methods=['POST'])
 def authenticate_user():

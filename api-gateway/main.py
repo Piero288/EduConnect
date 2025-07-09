@@ -16,6 +16,10 @@ SERVICE_MAP = {
 app = Flask(__name__)
 metrics = PrometheusMetrics(app)
 
+@app.route("/health", methods=["GET"])
+def health_check():
+    return "OK", 200
+
 #routing dinamico
 @app.route('/api/<string:service>/', defaults={'subpath': ''}, methods=["GET", "POST", "PUT", "DELETE"])
 @app.route('/api/<string:service>/<path:subpath>', methods=["GET", "POST", "PUT", "DELETE"])
