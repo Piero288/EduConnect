@@ -13,7 +13,7 @@ werkzeug_logger = logging.getLogger('werkzeug')
 
 @app.before_request
 def mute_werkzeug_on_health_and_metrics():
-    if request.path in ["/course/health", "/metrics"]:
+    if request.path in ["/courses/health", "/metrics"]:
         if werkzeug_logger.level != logging.ERROR:
             werkzeug_logger.setLevel(logging.ERROR)
     else:
