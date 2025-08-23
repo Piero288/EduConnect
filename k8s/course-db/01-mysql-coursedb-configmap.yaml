@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: mysql-coursedb-config
+  namespace: educonnect
 data:
   MYSQL_DATABASE: coursedb
   MYSQL_USER: user
