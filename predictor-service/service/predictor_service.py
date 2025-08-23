@@ -40,50 +40,61 @@ def get_total_http_requests(minutes):
         logger.error("Error parsing result")
         return {"message": "Error parsing result", "value": None}
 
+def _docker_filter(service: str) -> str:
+    return f'container_label_com_docker_compose_service="{service}"'
 
-def get_container_memory_usage(container_name):
-    query = f'container_memory_usage_bytes{{container_label_com_docker_compose_service="{container_name}"}}'
+def _k8s_filter(service: str, namespace: str) -> str:
+    # Pod con prefisso = service, escludo sempre l’infra "POD"
+    return f'namespace="{namespace}", pod=~"{service}-.*", container!="POD"'
+
+def _dual_selector(metric: str, service: str, namespace: str) -> str:
+    docker_sel = f'{metric}{{{_docker_filter(service)}}}'
+    k8s_sel    = f'{metric}{{{_k8s_filter(service, namespace)}}}'
+    return f'({docker_sel}) or ({k8s_sel})'
+
+def get_container_memory_usage(service: str, namespace: str):
+    metric = 'container_memory_usage_bytes'
+    query = _dual_selector(metric, service, namespace)
     result = query_prometheus(query)
     if not result:
-        logger.info("No data")
         return {"message": "No data", "value": None}
     try:
         value = float(result[0]["value"][1])
         memory_mb = value / 1_000_000
-        logger.info(f"Memory usage of {container_name}: {memory_mb} MB")
-        return {"message": f"Memory usage of {container_name}", "value": f"{memory_mb:.2f} MB"}
-    except:
-        logger.error("Error parsing result")
+        return {"message": f"Memory usage of {service}", "value": f"{memory_mb:.2f} MB"}
+    except Exception:
         return {"message": "Error parsing result", "value": None}
 
-def get_container_start_time(container_name):
-    query = f'container_start_time_seconds{{container_label_com_docker_compose_service="{container_name}"}}'
+def get_container_start_time(service, namespace):
+    metric = 'container_start_time_seconds'
+    query = _dual_selector(metric, service, namespace)
     result = query_prometheus(query)
     if not result:
-        logger.info("No data")
         return {"message": "No data", "value": None}
     try:
         value = float(result[0]["value"][1])
         readable_time = datetime.fromtimestamp(value, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-        logger.info(f"Start time of {container_name}: {readable_time} UTC")
-        return {"message": f"Start time of {container_name}", "value": f"{readable_time} UTC"}
+        logger.info(f"Start time of {service}: {readable_time} UTC")
+        return {"message": f"Start time of {service}", "value": f"{readable_time} UTC"}
     except:
         logger.error("Error parsing result")
         return {"message": "Error parsing result", "value": None}
 
-def get_network_transmit_errors(container_name):
-    query = f'container_network_transmit_errors_total{{container_label_com_docker_compose_service="{container_name}"}}'
+def get_network_transmit_errors(service, namespace):
+    metric = 'container_network_transmit_errors_total'
+    query = _dual_selector(metric, service, namespace)
     result = query_prometheus(query)
     if not result:
         logger.info("No data")
         return {"message": "No data", "value": None}
     try:
         value = float(result[0]["value"][1])
-        logger.info(f"Network errors of {container_name}: {value}")
-        return {"message": f"Network errors of {container_name}", "value": value}
+        logger.info(f"Network errors of {service}: {value}")
+        return {"message": f"Network errors of {service}", "value": value}
     except:
         logger.error("Error parsing result")
         return {"message": "Error parsing result", "value": None}
+
 
 def get_response_time_series(minutes):
     query = (

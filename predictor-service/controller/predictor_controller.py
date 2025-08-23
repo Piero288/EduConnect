@@ -44,25 +44,34 @@ def get_total_requests():
 #black-box -> memoria usata dal container
 @predictor_bp.route('/memory_usage', methods=['GET'])
 def get_memory_usage():
-    container_name = request.args.get("container_name", "api-gateway")
-    logger.info(f"A new request has arrived to retrieve the memory value used by the container '{container_name}'.")
-    result = get_container_memory_usage(container_name)
+    service = request.args.get("service")
+    if not service:
+        return jsonify({"error": "Missing 'service' parameter"}), 400
+    namespace = request.args.get("namespace", "educonnect")
+    logger.info(f"[memory_usage] service={service} ns={namespace}")
+    result = get_container_memory_usage(service, namespace)
     return jsonify(result)
 
 #black-box -> tempo di avvio del container
 @predictor_bp.route('/start_time', methods=['GET'])
 def get_start_time():
-    container_name = request.args.get("container_name", "api-gateway")
-    logger.info("A new request has arrived to retrieve the startup time from the '{container_name}' container.")
-    result = get_container_start_time(container_name)
+    service = request.args.get("service")
+    if not service:
+        return jsonify({"error": "Missing 'service' parameter"}), 400
+    logger.info(f"A new request has arrived to retrieve the startup time from the '{service}'.")
+    namespace = request.args.get("namespace", "educonnect")
+    result = get_container_start_time(service, namespace)
     return jsonify(result)
 
 #black-box -> totale errori rete 
 @predictor_bp.route('/network_errors', methods=['GET'])
 def get_network_errors():
-    container_name = request.args.get("container_name", "api-gateway")
-    logger.info(f"A new request has arrived to retrieve the total network errors from the '{container_name}' container.")
-    result = get_network_transmit_errors(container_name)
+    service = request.args.get("service")
+    if not service:
+        return jsonify({"error": "Missing 'service' parameter"}), 400
+    logger.info(f"A new request has arrived to retrieve the total network errors from the '{service}'.")
+    namespace = request.args.get("namespace", "educonnect")
+    result = get_network_transmit_errors(service, namespace)
     return jsonify(result)
 
 #predittore con ARIMA su tempo medio di risposta
