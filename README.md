@@ -112,7 +112,7 @@ Se si desidera eseguire l'applicazione utilizzando Docker in un ambiente locale,
 1. **Clonare il repository:**
 
    ```bash
-   git clone https://github.com/Francesco2499/DSBD_prj.git
+   git clone https://github.com/Piero288/EduConnect.git
    ```
 
 2. **Creare i file secret.yaml**
