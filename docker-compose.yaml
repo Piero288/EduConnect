@@ -1,0 +1,181 @@
+services:
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./api-gateway/.env
+    depends_on:
+      - auth-service
+      - user-service
+      - course-service
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    ports:
+      - "9050:9050"
+    env_file:
+      - ./auth-service/.env
+    volumes:
+      - ./auth-service/logs:/authservice/logs
+    restart: always
+  
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    ports:
+      - "9051:9051"
+    env_file:
+      - ./user-service/.env
+    depends_on:
+      mysql-userdb:
+        condition: service_healthy
+    volumes:
+      - ./user-service/logs:/userservice/logs
+    restart: always
+
+  mysql-userdb:
+    image: mysql:8.0
+    container_name: mysql-userdb
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_USERSERVICE_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_user_data:/var/lib/mysql
+      - ./user-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  course-service:
+    build: ./course-service
+    container_name: course-service
+    ports:
+      - "9052:9052"
+    env_file:
+      - ./course-service/.env
+    depends_on:
+      mysql-coursedb:
+        condition: service_healthy
+    volumes:
+      - ./course-service/logs:/courseservice/logs
+    restart: always
+
+  mysql-coursedb:
+    image: mysql:8.0
+    container_name: mysql-coursedb
+    restart: always
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_COURSESERVICE_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_course_data:/var/lib/mysql
+      - ./course-service/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka0:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka0
+    hostname: kafka0
+    depends_on:
+      - zookeeper
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_INTERNAL://kafka0:9092,LISTENER_EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_INTERNAL:PLAINTEXT,LISTENER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_INTERNAL
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - default
+  publisher-service:
+    build: ./publisher-service
+    container_name: publisher-service
+    ports:
+      - "5004:5004"
+    depends_on:
+      kafka0:
+        condition: service_healthy
+    env_file:
+      - ./publisher-service/.env
+    volumes:
+      - ./publisher-service/logs:/publisherservice/logs
+    restart: always
+  
+  subscriber-service:
+    build: ./subscriber-service
+    container_name: subscriber-service
+    depends_on:
+      kafka0:
+        condition: service_healthy
+    env_file:
+      - ./subscriber-service/.env
+    volumes:
+      - ./subscriber-service/logs:/subscriberservice/logs
+    restart: always
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+        - default
+      
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+  predictor-service:
+    build: ./predictor-service
+    container_name: predictor-service
+    ports:
+      - "9055:9055"
+    env_file:
+      - ./predictor-service/.env
+    restart: always
+
+volumes:
+  mysql_user_data:
+  mysql_course_data:

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-deployment
+  namespace: educonnect
+  labels:
+    app: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: educonnect-auth-service:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9050
+          envFrom:
+            - secretRef:
+                name: auth-secret
+          volumeMounts:
+            - name: auth-logs
+              mountPath: /authservice/logs
+          livenessProbe:
+            httpGet:
+              path: /auth/health
+              port: 9050
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /auth/health
+              port: 9050
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 2
+      volumes:
+        - name: auth-logs
+          emptyDir: {}

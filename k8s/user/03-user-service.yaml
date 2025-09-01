@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: educonnect
+spec:
+  selector:
+    app: user-service
+  ports:
+    - protocol: TCP
+      port: 9051        # porta esposta nel cluster
+      targetPort: 9051  # porta del container
+  type: ClusterIP

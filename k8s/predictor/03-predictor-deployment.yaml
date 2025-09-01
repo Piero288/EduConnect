@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: predictor-deployment
+  namespace: educonnect
+  labels:
+    app: predictor-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: predictor-service
+  template:
+    metadata:
+      labels:
+        app: predictor-service
+    spec:
+      containers:
+        - name: predictor-service
+          image: educonnect-predictor-service:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9055
+          envFrom:
+            - configMapRef:
+                name: predictor-config
+          volumeMounts:
+            - name: predictor-logs
+              mountPath: /predictorservice/logs
+          livenessProbe:
+            httpGet:
+              path: /predictor/health
+              port: 9055
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /predictor/health
+              port: 9055
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: predictor-logs
+          emptyDir: {}

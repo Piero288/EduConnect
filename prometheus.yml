@@ -1,0 +1,55 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:5000']
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  - job_name: 'course-service'
+    static_configs:
+      - targets: ['course-service:9052']
+
+  - job_name: 'user-service'
+    static_configs:
+      - targets: ['user-service:9051']
+  
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth-service:9050']
+  
+  # =======================
+  # KUBERNETES: cAdvisor via kubelet
+  # Necessario per avere le metriche container_memory_* con label
+  # namespace/pod/container.
+  # =======================
+  - job_name: 'kubelet-cadvisor'
+    scheme: https
+    metrics_path: /metrics/cadvisor
+    kubernetes_sd_configs:
+      - role: node
+    tls_config:
+      insecure_skip_verify: true
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    relabel_configs:
+      # usa l'InternalIP del nodo + porta 10250 (kubelet)
+      - source_labels: [__meta_kubernetes_node_address_InternalIP]
+        target_label: __address__
+        replacement: $1:10250
+      # porta eventuali label del nodo come label "normali"
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+  
+  - job_name: 'services-k8s'
+    static_configs:
+      - targets:
+          - 'auth-service.educonnect.svc:9050'
+          - 'user-service.educonnect.svc:9051'
+          - 'course-service.educonnect.svc:9052'
+          - 'predictor-service.educonnect.svc:5000'
+          #- 'publisher-service.educonnect.svc:9053'    # se presente
+          #- 'subscriber-service.educonnect.svc:9054'   # se presente

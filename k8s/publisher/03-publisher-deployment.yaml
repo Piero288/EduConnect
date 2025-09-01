@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: publisher-deployment
+  namespace: educonnect
+  labels:
+    app: publisher-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: publisher-service
+  template:
+    metadata:
+      labels:
+        app: publisher-service
+    spec:
+      containers:
+        - name: publisher-service
+          image: educonnect-publisher-service:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5004
+          envFrom:
+            - configMapRef:
+                name: publisher-config
+          volumeMounts:
+            - name: publisher-logs
+              mountPath: /publisherservice/logs
+          livenessProbe:
+            httpGet:
+              path: /publisher/health
+              port: 5004
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /publisher/health
+              port: 5004
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: publisher-logs
+          emptyDir: {}

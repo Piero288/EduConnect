@@ -1,0 +1,42 @@
+CREATE DATABASE IF NOT EXISTS coursedb;
+USE coursedb;
+
+CREATE TABLE IF NOT EXISTS courses (
+  course_id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  duration VARCHAR(50)
+);
+
+-- Crea la tabella se non esiste
+CREATE TABLE IF NOT EXISTS enrollments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  course_id INT NOT NULL,
+  user_email VARCHAR(255) NOT NULL,
+  UNIQUE KEY uq_course_user (course_id, user_email),
+  CONSTRAINT fk_course FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE
+);
+
+-- Inserimento corsi di default se la tabella è vuota
+INSERT INTO courses (title, description, duration)
+SELECT * FROM (
+  SELECT 'Python Base', 'Corso introduttivo di Python', '1 mese'
+  UNION ALL
+  SELECT 'Data Science', 'Analisi dati con Python e librerie scientifiche', '2 mesi'
+  UNION ALL
+  SELECT 'Machine Learning', 'Fondamenti di apprendimento automatico', '3 mesi'
+  UNION ALL
+  SELECT 'Lingua Inglese', 'Grammatica inglese', '3 mesi'
+  UNION ALL
+  SELECT 'Lingua Francese', 'Grammatica francese', '3 mesi'
+) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM courses);
+
+-- Inserimento iscrizioni di esempio se la tabella è vuota
+INSERT INTO enrollments (course_id, user_email)
+SELECT * FROM (
+  SELECT 1, 'mario.rossi@example.com'
+  UNION ALL
+  SELECT 2, 'luca.bianchi@example.com'
+) AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM enrollments);

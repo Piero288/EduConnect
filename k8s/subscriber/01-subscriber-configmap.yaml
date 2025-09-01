@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: subscriber-config
+  namespace: educonnect
+data:
+  ENVIRONMENT: "local"
+  KAFKA_BOOTSTRAP_SERVERS_K8S: "kafka0:29092"
+  KAFKA_BOOTSTRAP_SERVERS_LOCAL: "kafka0:9092"
+  TOPICS: "course-data_science,course-python_base,course-machine_learning,course-lingua_inglese,course-lingua_francese"
+  COURSE_SERVICE_URL: "http://course-service:9052/courses"

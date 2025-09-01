@@ -1,0 +1,5 @@
+Flask
+requests
+statsmodels
+python-dotenv
+prometheus_client

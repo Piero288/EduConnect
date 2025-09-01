@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-coursedb
+  namespace: educonnect
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-coursedb
+  template:
+    metadata:
+      labels:
+        app: mysql-coursedb
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          envFrom:
+            - configMapRef:
+                name: mysql-coursedb-config
+            - secretRef:
+                name: mysql-coursedb-secret
+          volumeMounts:
+            - name: mysql-coursedb-storage
+              mountPath: /var/lib/mysql
+            - name: mysql-init-volume
+              mountPath: /docker-entrypoint-initdb.d/init.sql  # Montiamo solo il file init.sql
+              subPath: init.sql  # Usa solo la parte "init.sql" del ConfigMap
+      volumes:
+        - name: mysql-coursedb-storage
+          persistentVolumeClaim:
+            claimName: mysql-coursedb-pvc
+        - name: mysql-init-volume
+          configMap:
+            name: mysql-coursedb-config

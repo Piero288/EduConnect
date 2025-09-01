@@ -1,0 +1,6 @@
+Flask
+requests
+python-dotenv
+mysql-connector-python
+bcrypt
+prometheus_flask_exporter
